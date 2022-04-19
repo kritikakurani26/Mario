@@ -100,20 +100,25 @@ scene("game", () => {
       camPos(player.pos.x, currCam.y);
     }
 
-    if (player.isGrounded()) {
+    if (player.isAlive && player.isGrounded()) {
       canSquash = false;
     }
   });
 
   player.onCollide("badGuy", (baddy) => {
-    if (baddy.isAlive === false) {
+    if (baddy.isAlive === false || player.isAlive === false) {
       return;
     }
     if (canSquash) {
       // Mario has jumped on the bad guy:
       baddy.squash();
     } else {
-      // Mario has been hurt. Add logic here later...
+      if (player.isBig) {
+        player.smaller();
+        baddy.changeDir();
+      } else {
+        killed();
+      }
     }
   });
 
@@ -131,6 +136,27 @@ scene("game", () => {
       box.bump();
     }
   });
+
+  player.onCollide("bigMushy", (mushy) => {
+    destroy(mushy);
+    player.bigger();
+  });
+
+  function killed() {
+    if (player.isAlive === false) {
+      return;
+    }
+    player.die();
+    add([
+      text("Game Over :(", { size: 24 }),
+      pos(toWorld(vec2(160, 120))),
+      color(255, 255, 255),
+      origin("center"),
+      layer("ui"),
+    ]);
+  }
 });
 
 go("game");
+
+/* HELPER FUNCTIONS */

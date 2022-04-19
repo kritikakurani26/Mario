@@ -17,6 +17,9 @@ function patrol(distance = 100, speed = 50, dir = 1) {
       }
       this.move(speed * dir, 0);
     },
+    changeDir() {
+      dir = -dir;
+    },
   };
 }
 
@@ -67,8 +70,75 @@ function bump(offset = 8, speed = 2, stopAtOrigin = true) {
   };
 }
 
+function mario() {
+  return {
+    id: "mario",
+    require: ["body", "area", "sprite", "bump"],
+    smallAnimation: "Running",
+    bigAnimation: "RunningBig",
+    smallStopFrame: 0,
+    bigStopFrame: 8,
+    smallJumpFrame: 5,
+    bigJumpFrame: 13,
+    isBig: false,
+    isFrozen: false,
+    isAlive: true,
+    update() {
+      if (this.isFrozen) {
+        this.standing();
+        return;
+      }
+
+      if (!this.isGrounded()) {
+        this.jumping();
+      } else {
+        if (isKeyDown("left") || isKeyDown("right")) {
+          this.running();
+        } else {
+          this.standing();
+        }
+      }
+    },
+    bigger() {
+      this.isBig = true;
+      this.area.width = 24;
+      this.area.height = 32;
+    },
+    smaller() {
+      this.isBig = false;
+      this.area.width = 16;
+      this.area.height = 16;
+    },
+    standing() {
+      this.stop();
+      this.frame = this.isBig ? this.bigStopFrame : this.smallStopFrame;
+    },
+    jumping() {
+      this.stop();
+      this.frame = this.isBig ? this.bigJumpFrame : this.smallJumpFrame;
+    },
+    running() {
+      const animation = this.isBig ? this.bigAnimation : this.smallAnimation;
+      if (this.curAnim() !== animation) {
+        this.play(animation);
+      }
+    },
+    freeze() {
+      this.isFrozen = true;
+    },
+    die() {
+      this.unuse("body");
+      this.bump();
+      this.isAlive = false;
+      this.freeze();
+      this.use(lifespan(1, { fade: 1 }));
+    },
+  };
+}
+
 module.exports = {
   patrol,
   enemy,
   bump,
+  mario,
 };

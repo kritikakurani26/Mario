@@ -1,4 +1,4 @@
-import { patrol, enemy, bump } from "./components";
+import { patrol, enemy, bump, mario } from "./components";
 
 export function createLevelsConfig() {
   return {
@@ -74,7 +74,7 @@ export function createLevelsConfig() {
       sprite("mario", { frame: 0 }),
       area({ width: 16, height: 16 }),
       body(),
-      //mario(),
+      mario(),
       bump(150, 20, false),
       origin("bot"),
       "player",
