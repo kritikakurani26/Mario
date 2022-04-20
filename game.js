@@ -1,14 +1,7 @@
 import kaboom from "./node_modules/kaboom/dist/kaboom.mjs";
 import { LEVELS } from "./levels/levelsDef";
 import { createLevelsConfig } from "./levels/levelsConf";
-// const kaboom = require("kaboom");
-
-// kaboom({
-//   background: [134, 135, 247],
-//   width: 320,
-//   height: 240,
-//   scale: 2,
-// });
+import loadAllSprites from "./utils/loadAllSprites.js";
 
 kaboom({
   background: [134, 135, 247],
@@ -18,29 +11,15 @@ kaboom({
   debug: true,
 });
 
-loadRoot("sprites/");
-loadAseprite("mario", "Mario.png", "Mario.json");
-loadAseprite("enemies", "enemies.png", "enemies.json");
-loadSprite("ground", "ground.png");
-loadSprite("questionBox", "questionBox.png");
-loadSprite("emptyBox", "emptyBox.png");
-loadSprite("brick", "brick.png");
-loadSprite("coin", "coin.png");
-loadSprite("bigMushy", "bigMushy.png");
-loadSprite("pipeTop", "pipeTop.png");
-loadSprite("pipeBottom", "pipeBottom.png");
-loadSprite("shrubbery", "shrubbery.png");
-loadSprite("hill", "hill.png");
-loadSprite("cloud", "cloud.png");
-loadSprite("castle", "castle.png");
+loadAllSprites();
 
 const SPEED = 120;
 const levelConf = createLevelsConfig();
 
-scene("game", () => {
+scene("game", (levelNumber = 0) => {
   layers(["bg", "game", "ui"], "game");
 
-  const gameLevel = addLevel(LEVELS[0], levelConf);
+  const gameLevel = addLevel(LEVELS[levelNumber], levelConf);
 
   // Add background elements
   let cloudX = 20;
@@ -74,12 +53,16 @@ scene("game", () => {
   const player = gameLevel.spawn("p", 1, 5);
   let canSquash = false;
 
+  // #region Player key press functions
+
   onKeyDown("right", () => {
+    if (player.isFrozen) return;
     player.flipX(false);
     player.move(SPEED, 0);
   });
 
   onKeyDown("left", () => {
+    if (player.isFrozen) return;
     player.flipX(true);
     if (toScreen(player.pos).x > 20) {
       player.move(-SPEED, 0);
@@ -87,11 +70,15 @@ scene("game", () => {
   });
 
   onKeyPress("space", () => {
-    if (player.isGrounded()) {
+    if (player.isAlive && player.isGrounded()) {
       player.jump();
       canSquash = true;
     }
   });
+
+  // #endregion
+
+  // #region Player action functions
 
   player.onUpdate(() => {
     // center camera to player
@@ -102,6 +89,10 @@ scene("game", () => {
 
     if (player.isAlive && player.isGrounded()) {
       canSquash = false;
+    }
+
+    if (player.pos.y > height() - 16) {
+      killed();
     }
   });
 
@@ -142,6 +133,25 @@ scene("game", () => {
     player.bigger();
   });
 
+  player.onCollide("castle", (castle, side) => {
+    player.freeze();
+    add([
+      text("Well Done!", { size: 24 }),
+      pos(toWorld(vec2(160, 120))),
+      color(255, 255, 255),
+      origin("center"),
+      layer("ui"),
+    ]);
+    wait(1, () => {
+      let nextLevel = levelNumber + 1;
+
+      if (nextLevel >= LEVELS.length) {
+        nextLevel = 0;
+      }
+      go("game", nextLevel);
+    });
+  });
+
   function killed() {
     if (player.isAlive === false) {
       return;
@@ -155,6 +165,8 @@ scene("game", () => {
       layer("ui"),
     ]);
   }
+
+  // #endregion
 });
 
 go("game");

@@ -83,12 +83,12 @@ function mario() {
     isBig: false,
     isFrozen: false,
     isAlive: true,
+    sizeAnimationOrder: [0, 16, 8],
     update() {
       if (this.isFrozen) {
         this.standing();
         return;
       }
-
       if (!this.isGrounded()) {
         this.jumping();
       } else {
@@ -103,11 +103,13 @@ function mario() {
       this.isBig = true;
       this.area.width = 24;
       this.area.height = 32;
+      this.animateSize();
     },
     smaller() {
       this.isBig = false;
       this.area.width = 16;
       this.area.height = 16;
+      this.animateSize(true);
     },
     standing() {
       this.stop();
@@ -132,6 +134,16 @@ function mario() {
       this.isAlive = false;
       this.freeze();
       this.use(lifespan(1, { fade: 1 }));
+    },
+    animateSize(reverse = false) {
+      let start = 200;
+      for (let idx = 0; idx < 3; idx++) {
+        let i = reverse === true ? 2 - idx : idx;
+        setTimeout(() => {
+          this.frame = this.sizeAnimationOrder[i];
+        }, start);
+        start += 200;
+      }
     },
   };
 }
